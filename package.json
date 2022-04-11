@@ -1,6 +1,6 @@
 {
   "name": "insomnia-plugin-hash-request-body",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "insomnia": {
     "name": "hash-request-body",
