@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 
+const replacementContent = 'TO BE DONE: replacementContent';
 const settings = {
   algorithm: '',
   encoding: '',
@@ -9,6 +10,10 @@ function encode(content) {
   const hash = crypto.createHash(settings.algorithm);
   hash.update(content, 'utf8');
   return hash.digest(settings.encoding);
+}
+
+function replaceWithHMAC(content, body) {
+  return content.replace(new RegExp(replacementContent, 'g'), encode(body))
 }
 
 module.exports.templateTags = [{
@@ -40,7 +45,27 @@ module.exports.templateTags = [{
     settings.algorithm = algorithm
     settings.encoding = encoding
 
-    let request = await context.util.models.request.getById(context.meta.requestId);
-    return encode(request.body.text);
+    return replacementContent;
   }
 }];
+
+module.exports.requestHooks = [
+  context => {
+    if (context.request.getUrl().indexOf(replacementContent) !== -1) {
+      context.request.setUrl(replaceWithHMAC(context.request.getUrl(), context.request.getBodyText()));
+    }
+    if (context.request.getBodyText().indexOf(replacementContent) !== -1) {
+      context.request.setBodyText(replaceWithHMAC(context.request.getBodyText(), context.request.getBodyText()));
+    }
+    context.request.getHeaders().forEach(h => {
+      if (h.value.indexOf(replacementContent) !== -1) {
+        context.request.setHeader(h.name, replaceWithHMAC(h.value, context.request.getBodyText()));
+      }
+    });
+    context.request.getParameters().forEach(p => {
+      if (p.value.indexOf(replacementContent) !== -1) {
+        context.request.setParameter(p.name, replaceWithHMAC(p.value, context.request.getBodyText()));
+      }
+    });
+  }
+];
